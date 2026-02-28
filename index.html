@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Cute Cat Experiment</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    margin:0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(-45deg, #fff0f6, #ffe4f1, #ffd6eb, #fff0f6);
+    background-size: 400% 400%;
+    animation: gradientFlow 12s ease infinite;
+}
+
+@keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+:root {
+    --neon-pink: #ff2ea6;
+}
+
+.main {
+    max-width: 750px;
+    margin: auto;
+    padding: 30px;
+}
+
+.logo-container {
+    text-align: center;
+    padding: 30px 0 10px 0;
+}
+
+.logo {
+    width: 400px;
+    height: 200px;
+    object-fit: contain;
+    display:block;
+    margin:auto;
+    animation: logoGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes logoGlow {
+    from { filter: drop-shadow(0 0 10px #febfd6); }
+    to { filter: drop-shadow(0 0 25px #ff69b4); }
+}
+
+h1 {
+    text-align:center;
+    color:#333;
+}
+
+.question {
+    margin: 25px 0;
+    padding:20px;
+    background:white;
+    border-radius:18px;
+    box-shadow:0 10px 30px rgba(255,105,180,0.08);
+    transition:0.3s ease;
+}
+
+.question:hover {
+    transform: translateY(-4px);
+    box-shadow:0 15px 40px rgba(255,105,180,0.15);
+}
+
+.options button {
+    display:block;
+    width:100%;
+    margin:8px 0;
+    padding:12px;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+    background:white;
+    border:2px solid #ffe2ec;
+    transition:0.25s ease;
+    font-weight:500;
+}
+
+.options button:hover {
+    background:#ffe2ec;
+    transform:scale(1.02);
+}
+
+.options button.selected {
+    background:#febfd6;
+    border-color:#febfd6;
+    color:#333;
+}
+
+.overlay {
+    position:fixed;
+    top:0;left:0;
+    width:100%;height:100%;
+    background:rgba(0,0,0,0.5);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:1000;
+}
+
+.popup {
+    background:white;
+    padding:30px;
+    border-radius:15px;
+    width:320px;
+    text-align:center;
+}
+
+.popup input {
+    width:90%;
+    padding:8px;
+    margin:10px 0;
+}
+
+.popup button {
+    background:#febfd6;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.submit-btn {
+    display:block;
+    margin:30px auto;
+    padding:12px 25px;
+    background:#febfd6;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.terms-container {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    margin-top:10px;
+    font-size:14px;
+}
+
+.terms-container input { margin:0;width:auto; }
+
+.terms-container a {
+    color:#febfd6;
+    text-decoration:underline;
+}
+
+
+#resultOverlay {
+  position: fixed;
+  inset: 0;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 240, 246, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  opacity: 0;
+  transform: scale(1.05);
+  pointer-events: none;
+  transition: opacity 0.8s ease, transform 0.8s ease;
+  z-index: 9999;
+}
+
+#resultOverlay.active {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: all;
+}
+
+#analyzeOverlay {
+    position: fixed;
+    inset: 0;
+    backdrop-filter: blur(10px);
+    background: rgba(255,240,246,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease;
+    z-index: 9998;
+}
+
+#analyzeOverlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.analyze-box {
+    width: 300px;
+    text-align: center;
+}
+
+.analyze-text {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    color: #ff69b4;
+}
+
+.analyze-bar {
+    width: 100%;
+    height: 8px;
+    background: #ffe4f1;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.analyze-fill {
+    height: 100%;
+    width: 0%;
+    background: #febfd6;
+    transition: width 0.3s ease;
+}
+
+body.dark #analyzeOverlay {
+    background: rgba(20,20,20,0.9);
+}
+
+body.dark .analyze-text {
+    color: var(--neon-pink);
+    text-shadow: 0 0 10px var(--neon-pink);
+}
+
+body.dark .analyze-fill {
+    background: var(--neon-pink);
+    box-shadow: 0 0 15px var(--neon-pink);
+}
+
+#catGif {
+  width: 260px;
+  height: 260px;
+  object-fit: cover;
+  border-radius: 25px;
+  animation: cinematicZoom 3s ease forwards;
+}
+
+@keyframes cinematicZoom {
+  from { transform: scale(0.8); }
+  to { transform: scale(1); }
+}
+
+.glow {
+  animation: glowPulse 2s infinite alternate;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes popIn {
+  from { transform: scale(0.7); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes glowPulse {
+  from { box-shadow: 0 0 15px #febfd6; }
+  to { box-shadow: 0 0 35px #ff69b4; }
+}
+
+.floating-hearts span {
+    position: fixed;
+    bottom: -10vh;
+    font-size: 22px;
+    opacity: 0.4;
+    animation: floatUp linear infinite;
+}
+
+@keyframes floatUp {
+    from { transform: translateY(0); }
+    to { transform: translateY(-120vh); }
+}
+
+.progress-bar {
+    width:100%;
+    height:8px;
+    background:#ffe4f1;
+    border-radius:10px;
+    margin-bottom:20px;
+    overflow:hidden;
+}
+
+.progress-fill {
+    height:100%;
+    width:0%;
+    background:#febfd6;
+    transition:0.4s ease;
+}
+
+.sparkle {
+    position: fixed;
+    font-size: 18px;
+    pointer-events: none;
+    animation: sparklePop 0.8s ease forwards;
+}
+
+@keyframes sparklePop {
+    0% { transform: scale(0.5); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+}
+
+@media (max-width: 600px){
+
+    .main {
+        padding: 15px;
+    }
+
+    .logo {
+    	width: 55%;
+    	max-width: 220px;
+    	height: auto;
+    }
+
+    .logo-container {
+    padding: 15px 0 5px 0;
+    }
+
+    .options button {
+        padding: 16px;
+        font-size: 16px;
+        border-radius: 16px;
+    }
+
+    .submit-btn {
+        width: 90%;
+        font-size: 18px;
+        padding: 16px;
+        border-radius: 16px;
+    }
+
+    #catGif {
+        width: 200px;
+        height: 200px;
+    }
+
+    #resultTitle {
+        font-size: 1.6rem;
+    }
+}
+
+.dark-toggle {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    background: white;
+    border: none;
+    border-radius: 50px;
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 16px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: 0.3s ease;
+    z-index: 9999;
+}
+
+.dark-toggle:hover {
+    transform: scale(1.1);
+}
+
+body.dark {
+    background: linear-gradient(-45deg, #1a1a1a, #2a1f2f, #1a1a1a);
+    color: #f5f5f5;
+}
+
+body.dark .question {
+    background: #2a2a2a;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+body.dark .options button {
+    background: #333;
+    border: 2px solid #444;
+    color: #f5f5f5;
+}
+
+body.dark .options button:hover {
+    background: #444;
+}
+
+body.dark .options button.selected {
+    background: #ff69b4;
+    border-color: #ff69b4;
+    color: white;
+}
+
+body.dark .submit-btn {
+    background: #ff69b4;
+    color: white;
+}
+
+body.dark .progress-bar {
+    background: #333;
+}
+
+body.dark #resultOverlay {
+    background: rgba(20,20,20,0.9);
+}
+
+body.dark .popup {
+    background: #2a2a2a;
+    color: #f5f5f5;
+}
+
+body.dark .popup input {
+    background: #333;
+    border: 1px solid #555;
+    color: #f5f5f5;
+}
+
+body.dark .popup button {
+    background: #ff69b4;
+    color: white;
+}
+
+body.dark .dark-toggle {
+    background: #333;
+    color: white;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+}
+
+
+body.dark .question {
+    border: 1px solid rgba(255,46,166,0.3);
+    box-shadow: 0 0 15px rgba(255,46,166,0.15);
+}
+
+body.dark .question:hover {
+    box-shadow: 0 0 25px rgba(255,46,166,0.35);
+}
+
+body.dark .options button:hover {
+    border-color: var(--neon-pink);
+    box-shadow: 0 0 12px var(--neon-pink);
+}
+
+body.dark .options button.selected {
+    background: var(--neon-pink);
+    box-shadow: 0 0 15px var(--neon-pink),
+                0 0 30px rgba(255,46,166,0.5);
+}
+
+body.dark .submit-btn {
+    background: var(--neon-pink);
+    box-shadow: 0 0 20px var(--neon-pink);
+}
+
+body.dark .submit-btn:hover {
+    box-shadow: 0 0 30px var(--neon-pink),
+                0 0 50px rgba(255,46,166,0.5);
+}
+
+body.dark .progress-fill {
+    background: var(--neon-pink);
+    box-shadow: 0 0 15px var(--neon-pink);
+}
+
+body.dark #resultTitle {
+    color: var(--neon-pink);
+    text-shadow: 0 0 15px var(--neon-pink);
+}
+
+.floating-hearts {
+    pointer-events: none;
+}
+
+.floating-hearts span {
+    pointer-events: none;
+}
+
+</style>
+</head>
+
+<body>
+<div class="logo-container">
+    <img src="images/ECC.png" alt="Logo" class="logo">
+</div>
+<button id="darkToggle" class="dark-toggle">🌙</button>
+<!-- Popup -->
+<div class="overlay" id="popup">
+<div class="popup">
+<h3>Enter Instagram Username</h3>
+<input type="text" id="username" placeholder="Username">
+
+<div class="terms-container">
+<input type="checkbox" id="terms">
+<label for="terms">
+I accept the 
+<a href="terms.html" target="_blank">Terms & Conditions</a>
+</label>
+</div>
+
+<br>
+<button onclick="enterSite()">Enter</button>
+<p id="popupWarning" style="color:red;"></p>
+</div>
+</div>
+
+<div class="main">
+<h1>Experiment Cute Cat </h1>
+<div class="progress-bar">
+    <div class="progress-fill" id="progressFillTop"></div>
+</div>
+<div id="quiz"></div>
+<div class="progress-bar">
+    <div class="progress-fill" id="progressFillBottom"></div>
+</div>
+<div class="floating-hearts"></div>
+
+<button class="submit-btn" onclick="submitQuiz()">Reveal Result</button>
+<p id="warning" style="color:red;text-align:center;"></p>
+</div>
+
+<div id="analyzeOverlay">
+    <div class="analyze-box">
+        <div class="analyze-text" id="analyzeText">
+            Analyzing your personality...
+        </div>
+        <div class="analyze-bar">
+            <div class="analyze-fill" id="analyzeFill"></div>
+        </div>
+    </div>
+</div>
+
+<div id="resultOverlay">
+  <div id="resultTitle"></div>
+  <img id="catGif" src="">
+</div>
+
+<script>
+
+let submitting = false;
+let savedUsername="";
+let answers={};
+
+const questions = [
+{
+    text: "It’s Friday night. You:",
+    options: {
+        A: "Do something random just because",
+        B: "Push yourself to improve at something",
+        C: "Call someone just to say you miss them",
+        D: "Play a sport or go outside"
+    }
+},
+{
+    text: "Your energy feels:",
+    options: {
+        A: "Chaotic",
+        B: "Intense",
+        C: "Affectionate",
+        D: "Active"
+    }
+},
+{
+    text: "Someone challenges you. You:",
+    options: {
+        A: "Respond unpredictably",
+        B: "Step up immediately",
+        C: "Smile and say 'I still believe in you'",
+        D: "Turn it into competition"
+    }
+},
+{
+    text: "Your ideal superpower:",
+    options: {
+        A: "Break reality",
+        B: "Super strength",
+        C: "Heal emotions",
+        D: "Super speed"
+    }
+},
+{
+    text: "Your aesthetic:",
+    options: {
+        A: "Weirdcore / colorful chaos",
+        B: "Dark action",
+        C: "Soft neutral tones",
+        D: "Athletic streetwear"
+    }
+},
+{
+    text: "In a group project you:",
+    options: {
+        A: "Suggest the wild ideas",
+        B: "Take charge",
+        C: "Make sure everyone feels included",
+        D: "Organize efficiently"
+    }
+},
+{
+    text: "Your biggest fear:",
+    options: {
+        A: "Being boring",
+        B: "Losing power",
+        C: "Hurting someone",
+        D: "Falling behind"
+    }
+},
+{
+    text: "Pick a pet accessory:",
+    options: {
+        A: "Glow-in-the-dark collar",
+        B: "Spiked collar",
+        C: "Heart shaped glitter tag",
+        D: "Jersey"
+    }
+},
+{
+    text: "You get bored easily when:",
+    options: {
+        A: "Things are too normal",
+        B: "There’s no challenge",
+        C: "There’s no connection",
+        D: "There’s no action"
+    }
+},
+{
+    text: "Your playlist is mostly:",
+    options: {
+        A: "Experimental sounds",
+        B: "Hard intense beats",
+        C: "Love songs",
+        D: "Hype music"
+    }
+},
+{
+    text: "Your reaction to winning:",
+    options: {
+        A: "Do something unexpected",
+        B: "Celebrate loudly",
+        C: "Thank everyone",
+        D: "Show off your skills"
+    }
+},
+{
+    text: "You laugh most at:",
+    options: {
+        A: "Absurd randomness",
+        B: "High-energy action",
+        C: "Cute wholesome moments",
+        D: "Competitive wins"
+    }
+},
+{
+    text: "Your strength is:",
+    options: {
+        A: "Creativity",
+        B: "Power",
+        C: "Empathy",
+        D: "Discipline"
+    }
+},
+{
+    text: "Your default expression:",
+    options: {
+        A: "Confusing",
+        B: "Serious",
+        C: "Dreamy smile",
+        D: "Confident grin"
+    }
+},
+{
+    text: "Your ideal weather:",
+    options: {
+        A: "Colorful storm",
+        B: "Thunder",
+        C: "Light rain",
+        D: "Sunny day"
+    }
+},
+{
+    text: "If you were famous:",
+    options: {
+        A: "For being unpredictable",
+        B: "For dominance",
+        C: "For kindness",
+        D: "For athletic ability"
+    }
+},
+{
+    text: "Someone needs help. You:",
+    options: {
+        A: "Offer a strange but clever idea",
+        B: "Fix it directly",
+        C: "Comfort them",
+        D: "Motivate them"
+    }
+},
+{
+    text: "Your dream hobby:",
+    options: {
+        A: "Experimental art",
+        B: "Combat training",
+        C: "Writing in a journal/diary",
+        D: "Competitive sport"
+    }
+},
+{
+    text: "Your vibe online:",
+    options: {
+        A: "Mysterious chaos",
+        B: "Bold edits",
+        C: "Sweet captions",
+        D: "Fitness posts"
+    }
+},
+{
+    text: "Deep down you are:",
+    options: {
+        A: "Never quite what people expect",
+        B: "A warrior",
+        C: "More sensitive than you show",
+        D: "A competitor"
+    }
+}
+];
+
+function enterSite(){
+    const username=document.getElementById("username").value.trim();
+    const terms=document.getElementById("terms").checked;
+    const warn=document.getElementById("popupWarning");
+
+    if(!username){ warn.innerText="Username required."; return; }
+        if(username.includes(" ")){
+            warn.innerText="Username cannot contain spaces.";
+            return;
+    }
+    if(!terms){ warn.innerText="You must accept terms."; return; }
+
+    savedUsername=username;
+    document.getElementById("popup").style.display="none";
+
+    const music = document.getElementById("bgMusic");
+
+	if(music && !music.paused){
+    	    let fadeInterval = setInterval(()=>{
+        	if(music.volume > 0.1){
+                    music.volume -= 0.02;
+                } else {
+                    clearInterval(fadeInterval);
+                }
+            }, 100);
+        }
+    
+    if(music){
+    music.volume = 0.5;
+    music.play().catch(()=>{});
+}
+
+}
+
+function runAnalysis(callback){
+
+    const overlay = document.getElementById("analyzeOverlay");
+    const fill = document.getElementById("analyzeFill");
+    const text = document.getElementById("analyzeText");
+
+    const messages = [
+        "Analyzing your personality...",
+        "Scanning emotional patterns...",
+        "Measuring chaotic energy...",
+        "Calculating vibe frequency...",
+        "Matching with feline archetype..."
+    ];
+
+    let progress = 0;
+    overlay.classList.add("active");
+    fill.style.width = progress + "%";
+    let messageIndex = 0;
+
+    const interval = setInterval(()=>{
+        progress += Math.random() * 12;
+	    progress = Math.min(progress, 100);
+
+        fill.style.width = progress + "%";
+
+        if(progress > (messageIndex+1)*20 && messageIndex < messages.length-1){
+            messageIndex++;
+            text.innerText = messages[messageIndex];
+        }
+
+        if(progress >= 100){
+            clearInterval(interval);
+            setTimeout(()=>{
+                overlay.classList.remove("active");
+                callback();
+            }, 500);
+            fill.style.width = "100%";
+        }
+    }, 200);
+}
+
+function loadQuiz(){
+    const quiz=document.getElementById("quiz");
+
+    questions.forEach((q,i)=>{
+        const div=document.createElement("div");
+        div.classList.add("question");
+        div.innerHTML="<strong>"+q.text+"</strong>";
+
+        const optDiv=document.createElement("div");
+        optDiv.classList.add("options");
+
+        Object.entries(q.options).forEach(([letter,text])=>{
+            const btn=document.createElement("button");
+            btn.innerText=letter + ") " + text;
+
+	    btn.onclick=(e)=>{
+    	    	answers[i]=letter;
+    	    	[...optDiv.children].forEach(b=>b.classList.remove("selected"));
+    	    	btn.classList.add("selected");
+
+    	    	const x = e.pageX || (e.touches && e.touches[0].pageX) || window.innerWidth/2;
+    	    	const y = e.pageY || (e.touches && e.touches[0].pageY) || window.innerHeight/2;
+
+    	    	sparkleEffect(x,y);
+    		updateProgress();
+	    	};
+
+            optDiv.appendChild(btn);
+        });
+
+        div.appendChild(optDiv);
+        quiz.appendChild(div);
+    });
+}
+
+function sparkleEffect(x,y){
+    const sparkle = document.createElement("div");
+    sparkle.classList.add("sparkle");
+    sparkle.innerText = "✨";
+    sparkle.style.left = x + "px";
+    sparkle.style.top = y + "px";
+    document.body.appendChild(sparkle);
+
+    setTimeout(()=> sparkle.remove(), 800);
+}
+
+function updateProgress(){
+    const total = questions.length;
+    const answered = Object.keys(answers).length;
+    const percent = (answered / total) * 100;
+
+    document.getElementById("progressFillTop").style.width = percent + "%";
+    document.getElementById("progressFillBottom").style.width = percent + "%";
+}
+loadQuiz();
+
+function createHearts(){
+    const container = document.querySelector(".floating-hearts");
+    container.innerHTML = ""; // clear old ones
+
+    for(let i=0;i<15;i++){
+        const heart = document.createElement("span");
+        heart.innerText = ["💖","✨","🐾"][Math.floor(Math.random()*3)];
+        heart.style.left = Math.random()*100 + "vw";
+        heart.style.animationDuration = (15 + Math.random()*10) + "s";
+        heart.style.animationDelay = Math.random()*5 + "s";
+        container.appendChild(heart);
+    }
+}
+
+createHearts();
+
+function determineResult(s){
+
+    if(
+        s.C >= 8 &&     // strong empathy presence
+        s.A <= 3 &&     // not chaotic
+        s.B <= 5 &&     // not overly intense
+        s.C > s.D       // more soft than competitive
+    ){
+        return "F";
+    }
+
+    if(
+        (s.C === 6 && s.D === 7) ||
+        (s.A === 6 && s.B === 7) ||
+	    (s.B === 6 && s.C === 7)
+    ){
+        return "E";
+    }
+
+    if(
+        s.A >= 6 && s.A <= 8 &&
+        s.B >= 2 && s.B <= 4 &&
+        Math.abs(s.A - s.B) <= 2 &&
+        s.C <= 6
+    ){
+        return "E";
+    }
+
+    return Object.keys(s).reduce((a,b)=>s[a]>s[b]?a:b);
+}
+async function submitQuiz(){
+    if(submitting) return;
+    submitting = true;
+    document.querySelector(".submit-btn").disabled = true;
+    const warning=document.getElementById("warning");
+    if(Object.keys(answers).length < questions.length){
+        warning.innerText="Answer all questions.";
+        submitting = false;
+        document.querySelector(".submit-btn").disabled = false;
+        return;
+    }
+
+    warning.innerText = "";
+
+    let scores={A:0,B:0,C:0,D:0};
+    Object.values(answers).forEach(v=>scores[v]++);
+
+    const result=determineResult(scores);
+    await saveUsername(savedUsername, result);
+
+    const links={
+        A:{gif:"images/FunkyCat.gif",url:"https://yourwebsite.com/videoA",title:"Funky Cat 🌀"},
+        B:{gif:"images/ChainsawCat.gif",url:"https://yourwebsite.com/videoB",title:"Chainsaw Cat ⚡"},
+        C:{gif:"images/HeartCat.gif",url:"https://yourwebsite.com/videoC",title:"Heart Cat 💖"},
+        D:{gif:"images/SoccerCat.gif",url:"https://yourwebsite.com/videoD",title:"Sporty Cat ⚽"},
+        E:{gif:"images/MemeCat.gif",url:"https://yourwebsite.com/secret5",title:"Meme Cat 🗣️"},
+        F:{gif:"images/ShyCat.gif",url:"https://yourwebsite.com/secret6",title:"Shy Cat 🌸"}
+    };
+
+    const chosen=links[result];
+    runAnalysis(()=>{
+    showResult(chosen.title, chosen.gif, chosen.url);
+});
+}
+
+function showResult(name, gifPath, redirectUrl){
+
+    submitting = false;
+    document.querySelector(".submit-btn").disabled = false;
+
+    const overlay = document.getElementById("resultOverlay");
+    const title = document.getElementById("resultTitle");
+    const gif = document.getElementById("catGif");
+
+    title.innerText = name;
+    gif.src = gifPath;
+
+    overlay.classList.add("active");
+
+    const music = document.getElementById("bgMusic");
+
+    if(music && !music.paused){
+        let fadeInterval = setInterval(()=>{
+            if(music.volume > 0.1){
+                music.volume -= 0.02;
+            } else {
+                clearInterval(fadeInterval);
+            }
+        }, 100);
+    }
+
+    setTimeout(()=>{
+        window.location.href = redirectUrl;
+    }, 5000);
+}
+
+const toggleBtn = document.getElementById("darkToggle");
+
+
+if(localStorage.getItem("darkMode") === "true"){
+    document.body.classList.add("dark");
+    toggleBtn.innerText = "☀️";
+}
+
+toggleBtn.onclick = () => {
+    document.body.classList.toggle("dark");
+
+    const isDark = document.body.classList.contains("dark");
+
+    toggleBtn.innerText = isDark ? "☀️" : "🌙";
+    localStorage.setItem("darkMode", isDark);
+};
+async function saveUsername(username, result) {
+    const formData = new FormData();
+
+    
+    formData.append("entry.1287202016", username);
+
+    
+    formData.append("entry.1609828710", new Date().toISOString());
+
+    
+    formData.append("entry.1906918541", result);
+
+    await fetch(
+        "https://docs.google.com/forms/u/0/d/e/1FAIpQLScNtBS6MjzxZFM6lZVVsRqKae6wd7KbQRm7b5nTTF-UIN6T9w/formResponse",
+        {
+            method: "POST",
+            mode: "no-cors",
+            body: formData
+        }
+    );
+}
+</script>
+<audio id="bgMusic" src="images/warmnights.mp3" loop></audio>
+</body>
+</html>
+
+
+
+
