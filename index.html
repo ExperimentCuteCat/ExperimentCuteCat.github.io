@@ -536,6 +536,28 @@ I accept the
 
 <script>
 
+let allowedHashes = [];
+
+async function loadAllowedHashes() {
+    if (allowedHashes.length > 0) return; // already loaded
+    try {
+        const response = await fetch('allowedHashes.json');
+        allowedHashes = await response.json();
+    } catch (error) {
+        console.error('Failed to load allowedHashes.json:', error);
+        allowedHashes = [];
+    }
+}
+
+
+async function hashUsername(username){
+    const encoder = new TextEncoder();
+    const data = encoder.encode(username.toLowerCase().trim()); // lowercase & trim
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2,"0")).join("");
+}
+
 let submitting = false;
 let savedUsername="";
 let answers={};
@@ -723,38 +745,35 @@ const questions = [
 }
 ];
 
-function enterSite(){
-    const username=document.getElementById("username").value.trim();
-    const terms=document.getElementById("terms").checked;
-    const warn=document.getElementById("popupWarning");
+async function enterSite(){
+    const username = document.getElementById("username").value.trim();
+    const terms = document.getElementById("terms").checked;
+    const warn = document.getElementById("popupWarning");
 
     if(!username){ warn.innerText="Username required."; return; }
-        if(username.includes(" ")){
-            warn.innerText="Username cannot contain spaces.";
-            return;
-    }
+    if(username.includes(" ")){ warn.innerText="Username cannot contain spaces."; return; }
     if(!terms){ warn.innerText="You must accept terms."; return; }
 
-    savedUsername=username;
+    await loadAllowedHashes();
+
+    // 🔹 Hash the input username
+    const hashed = await hashUsername(username);
+
+    // 🔹 Check if the hash exists in the allowed list
+    if(!allowedHashes.includes(hashed)){
+        warn.innerText = "Sorry, you are not allowed to access this quiz. Try a different username or the one that you were messaged on.";
+        return;
+    }
+
+    // ✅ Passed the check
+    savedUsername = username;
     document.getElementById("popup").style.display="none";
 
     const music = document.getElementById("bgMusic");
-
-	if(music && !music.paused){
-    	    let fadeInterval = setInterval(()=>{
-        	if(music.volume > 0.1){
-                    music.volume -= 0.02;
-                } else {
-                    clearInterval(fadeInterval);
-                }
-            }, 100);
-        }
-    
     if(music){
-    music.volume = 0.5;
-    music.play().catch(()=>{});
-}
-
+        music.volume = 0.5;
+        music.play().catch(()=>{});
+    }
 }
 
 function runAnalysis(callback){
@@ -921,12 +940,12 @@ async function submitQuiz(){
     await saveUsername(savedUsername, result);
 
     const links={
-        A:{gif:"images/FunkyCat.gif",url:"https://yourwebsite.com/videoA",title:"Funky Cat 🌀"},
-        B:{gif:"images/ChainsawCat.gif",url:"https://yourwebsite.com/videoB",title:"Chainsaw Cat ⚡"},
-        C:{gif:"images/HeartCat.gif",url:"https://yourwebsite.com/videoC",title:"Heart Cat 💖"},
-        D:{gif:"images/SoccerCat.gif",url:"https://yourwebsite.com/videoD",title:"Sporty Cat ⚽"},
-        E:{gif:"images/MemeCat.gif",url:"https://yourwebsite.com/secret5",title:"Meme Cat 🗣️"},
-        F:{gif:"images/ShyCat.gif",url:"https://yourwebsite.com/secret6",title:"Shy Cat 🌸"}
+        A:{gif:"images/FunkyCat.gif",url:"result/ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb.html",title:"Funky Cat 🌀"},
+        B:{gif:"images/ChainsawCat.gif",url:"result/3e23e8160039594a33894f6564e1b1348bbd7a0088d42c4acb73eeaed59c009d.html",title:"Chainsaw Cat ⚡"},
+        C:{gif:"images/HeartCat.gif",url:"result/2e7d2c03a9507ae265ecf5b5356885a53393a2029d241394997265a1a25aefc6.html",title:"Heart Cat 💖"},
+        D:{gif:"images/SoccerCat.gif",url:"result/18ac3e7343f016890c510e93f935261169d9e3f565436429830faf0934f4f8e4.html",title:"Sporty Cat ⚽"},
+        E:{gif:"images/MemeCat.gif",url:"result/3f79bb7b435b05321651daefd374cdc681dc06faa65e374e38337b88ca046dea.html",title:"Meme Cat 🗣️"},
+        F:{gif:"images/ShyCat.gif",url:"result/252f10c83610ebca1a059c0bae8255eba2f95be4d1d7bcfa89d7248a82d9f111.html",title:"Shy Cat 🌸"}
     };
 
     const chosen=links[result];
@@ -963,15 +982,24 @@ function showResult(name, gifPath, redirectUrl){
 
     setTimeout(()=>{
         window.location.href = redirectUrl;
-    }, 5000);
+    }, 7500);
 }
 
 const toggleBtn = document.getElementById("darkToggle");
 
+// On first visit, randomly choose dark or light mode 50/50 and persist choice
+if (localStorage.getItem("darkMode") === null) {
+    const isDarkDefault = Math.random() < 0.5;
+    localStorage.setItem("darkMode", isDarkDefault);
+}
 
-if(localStorage.getItem("darkMode") === "true"){
+const isDarkMode = localStorage.getItem("darkMode") === "true";
+if (isDarkMode) {
     document.body.classList.add("dark");
     toggleBtn.innerText = "☀️";
+} else {
+    document.body.classList.remove("dark");
+    toggleBtn.innerText = "🌙";
 }
 
 toggleBtn.onclick = () => {
@@ -983,16 +1011,20 @@ toggleBtn.onclick = () => {
     localStorage.setItem("darkMode", isDark);
 };
 async function saveUsername(username, result) {
+    const timestamp = new Date().toISOString();
     const formData = new FormData();
 
-    
     formData.append("entry.1287202016", username);
-
-    
-    formData.append("entry.1609828710", new Date().toISOString());
-
-    
+    formData.append("entry.1609828710", timestamp);
     formData.append("entry.1906918541", result);
+
+    // cache the form payload so it can be re-sent from result page.
+    const cached = {
+        username,
+        timestamp,
+        result
+    };
+    localStorage.setItem("ecc_cachedFormData", JSON.stringify(cached));
 
     await fetch(
         "https://docs.google.com/forms/u/0/d/e/1FAIpQLScNtBS6MjzxZFM6lZVVsRqKae6wd7KbQRm7b5nTTF-UIN6T9w/formResponse",
@@ -1002,6 +1034,14 @@ async function saveUsername(username, result) {
             body: formData
         }
     );
+}
+
+// keep sync with cookies also if wanted by user request.
+if (window.location && window.document) {
+    const cache = localStorage.getItem("ecc_cachedFormData");
+    if (cache) {
+        document.cookie = `ecc_cachedFormData=${encodeURIComponent(cache)}; path=/; max-age=${60*60*24*30}`;
+    }
 }
 </script>
 <audio id="bgMusic" src="images/warmnights.mp3" loop></audio>
